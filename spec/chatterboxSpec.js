@@ -15,6 +15,7 @@ describe('chatterbox', function() {
 
     before(function() {
       ajaxSpy = sinon.stub($, 'ajax');
+      $('#send .submit').off('submit');
       app.init();
     });
 
@@ -106,7 +107,7 @@ describe('chatterbox', function() {
 
         app.init();
 
-        $('#main').find('.username').trigger('click');
+        $('#chats').find('.username').trigger('click');
         expect(app.handleUsernameClick.called).to.be.true;
 
         app.handleUsernameClick.restore();

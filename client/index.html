@@ -17,6 +17,7 @@
         newSearch += 'username=' + (prompt('What is your name?') || 'anonymous');
         window.location.search = newSearch;
       }
+
     </script>
     <!-- your scripts -->
     <script src="env/config.js"></script>
@@ -26,6 +27,13 @@
     <div id="main">
       <h1>chatterbox</h1>
       <!-- Your HTML goes here! -->
+      Rooms:
+      <select id="roomSelect">
+      </select>
+      <form id="send">
+        <input id="message" type="text">
+        <input class="submit" type="submit" value="Share">
+      </form>
     </div>
     <div id="chats"></div>
   </body>
