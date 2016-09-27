@@ -5,6 +5,10 @@ body {
     font-family: arial, sans-serif;
 }
 
+.fixed{
+    position: fixed;
+}
+
 #main, #chats {
     width: 500px;
     margin: auto;

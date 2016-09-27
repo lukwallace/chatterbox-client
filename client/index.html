@@ -24,11 +24,11 @@
     <script src="scripts/app.js"></script>
   </head>
   <body>
-    <div id="main">
+    <div id="main" class="fixed">
       <h1>chatterbox</h1>
       <!-- Your HTML goes here! -->
       Rooms:
-      <select id="roomSelect">
+      <select id="roomSelect" onchange="app.changeRoom(value)">
       </select>
       <form id="send">
         <input id="message" type="text">
