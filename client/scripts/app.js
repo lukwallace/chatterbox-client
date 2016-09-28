@@ -6,6 +6,8 @@ app.friendList = {};
 app.server = 'https://api.parse.com/1/classes/messages';
 app.user = window.location.href.slice(window.location.href.indexOf('username=') + 9);
 app.roomList = {};
+var refreshing = false;
+var latestMessageTimeStamp;
 
 app.send = function(message, callback) {
   $.ajax({
@@ -26,6 +28,8 @@ app.send = function(message, callback) {
 };
 
 app.fetch = function(callback, params) {
+  console.log(params);
+  console.log(filter);
   var base = params === undefined ? filter : $.extend(filter, params);
   var where = '&where=' + JSON.stringify(base);
   var order = '?order=-updatedAt';
@@ -34,6 +38,8 @@ app.fetch = function(callback, params) {
     type: 'GET',
     dataType: 'json',
     success: function(data) {
+      console.log(data);
+      latestMessageTimeStamp = data.results[0] ? data.results[0].updatedAt : latestMessageTimeStamp;
       callback(data);
     },
     error: function(err) {
@@ -50,6 +56,9 @@ app.renderMessage = function(message, mode) {
   var $userName = $('<a class="username" ></a>' );
   $userName.text(message.username);
   $userName.click(app.handleUsernameClick.bind(null, $userName.text()));
+  if (app.friendList[$userName.text()]) {
+    $userName.addClass('friend');
+  }
   var $message = $('<div></div>');
   $message.addClass('chat');
   var $text = $('<h3></h3>').text(message.text);
@@ -67,15 +76,30 @@ app.renderMessage = function(message, mode) {
 };
 
 app.init = function () {
-  var $button = $('.submit');
-  var $textbox = $('#message');
+  var temp = $('#main').offset();
+  $('#chats').css('margin-top', 272);
+  $('#main').css('position', 'fixed').css('top', 0).css('left', temp.left);
+
+  $(window).scroll(function() {
+    // console.log($(window).scrollTop());
+    if ($(window).scrollTop() === 0 && !refreshing) {
+      $(window).scrollTop(5);
+      console.log('refreshing...');
+      app.refresh();
+    }
+  });
+
+  
   $('#send').on('submit', function(event) {
     event.preventDefault();
-    app.handleSubmit($textbox.val());
-    $textbox.val('');
+    if ($('#message').val() !== '') {
+      app.handleSubmit($('#message').val());
+      $('#message').val('');
+    }
   });
+  
   app.fetch( function(obj) {
-    app.renderRoom(defaultRoom);
+    app.renderRoom('New Room...');
     var messages = obj.results;
     for (var i = 0; i < messages.length; i++) {
       if (messages[i].roomname === defaultRoom) {
@@ -83,17 +107,31 @@ app.init = function () {
       }
       app.renderRoom(messages[i].roomname);
     }
+
+    $('#roomSelect').val(defaultRoom);
   });
 };
 
-app.changeRoom = function(value) {
-  app.clearMessages();
-  filter = {roomname: value};
-  app.fetch(function(obj) {
-    for (var i = 0; i < obj.results.length; i++) {
-      app.renderMessage(obj.results[i]);
+app.changeRoom = function(value, event) {
+  if ($('#roomSelect').prop('selectedIndex') === 0) {
+    var newRoomName = prompt('Give a new room name...');
+    if (newRoomName) {
+      app.renderRoom(newRoomName);
+      filter = {roomname: newRoomName};
+      $('#roomSelect').val(newRoomName);
+      app.clearMessages();
     }
-  });
+  } else {
+    refreshing = true;
+    app.clearMessages();
+    filter = {roomname: value};
+    app.fetch(function(obj) {
+      for (var i = 0; i < obj.results.length; i++) {
+        app.renderMessage(obj.results[i]);
+      }
+      refreshing = false;
+    });
+  }
 };
 
 app.renderRoom = function(roomName) {
@@ -109,12 +147,12 @@ app.renderRoom = function(roomName) {
 };
 
 app.handleUsernameClick = function(username) {
+  app.friendList[username] = !app.friendList[username];
   $('.username').each(function () {
     if ($(this).text() === username) {
       $(this).toggleClass('friend');
     }
   });
-  app.friendList[username] = 1;
 };
 
 app.handleSubmit = function(text) {
@@ -127,13 +165,18 @@ app.handleSubmit = function(text) {
 };
 
 app.refresh = function() {
-  var currentTime = $('#chats :first :nth-child(3)').text();
-  var params = {updatedAt: {$gt: currentTime}};
+  refreshing = true;
+  // var currentTime = $('#chats :first :nth-child(3)').text();
+  // if (currentTime === '') {
+  //   ;
+  // }
+  var params = {updatedAt: {$gt: latestMessageTimeStamp}};
   app.fetch( function(obj) {
     var messages = obj.results;
-    for (var i = 0; i < messages.length; i++) {
+    for (var i = messages.length - 1; i > -1; i--) {
       app.renderMessage(messages[i], true);
     }
+    refreshing = false;
   }, params);
 };
 
