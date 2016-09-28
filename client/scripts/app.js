@@ -17,7 +17,7 @@ app.send = function(message, callback) {
     data: JSON.stringify(message),
     contentType: 'application/json',
     success: function (data) {
-      console.log('chatterbox: Message sent', data);
+      console.log('chatterbox: Message sent');
       callback();
     },
     error: function (data) {
@@ -28,15 +28,12 @@ app.send = function(message, callback) {
 };
 
 app.fetch = function(callback, params) {
-  console.log(params);
-  console.log(filter);
   var base = params === undefined ? filter : $.extend(filter, params);
-  var where = '&where=' + JSON.stringify(base);
-  var order = '?order=-updatedAt';
   $.ajax({
-    url: app.server + order + where,
+    url: app.server,
     type: 'GET',
     dataType: 'json',
+    data: {where: base, order: '-updatedAt'},
     success: function(data) {
       console.log(data);
       latestMessageTimeStamp = data.results[0] ? data.results[0].updatedAt : latestMessageTimeStamp;

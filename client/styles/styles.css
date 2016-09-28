@@ -59,6 +59,10 @@ form input[type=text] {
     padding: 5px;
 }
 
+a:hover {
+    cursor: pointer;
+}
+
 .chat {
     padding: 5px;
     margin-bottom: 5px;
