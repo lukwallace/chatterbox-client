@@ -22,6 +22,12 @@
     <!-- your scripts -->
     <script src="env/config.js"></script>
     <script src="scripts/app.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+      $( function() {
+        $( '#tabs' ).tabs();
+      } );
+    </script>
   </head>
   <body>
     <div id="main">
@@ -35,6 +41,11 @@
         <input class="submit" type="submit" value="Share">
       </form>
     </div>
-    <div id="chats"></div>
+    <div id="tabs">
+      <ul id="tabList">
+        <li><a href="#chats">lobby</a></li>
+      </ul>
+      <div id="chats" data-roomname="lobby"></div>
+    </div>
   </body>
 </html>

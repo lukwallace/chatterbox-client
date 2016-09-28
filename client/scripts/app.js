@@ -8,6 +8,8 @@ app.user = window.location.href.slice(window.location.href.indexOf('username=') 
 app.roomList = {};
 var refreshing = false;
 var latestMessageTimeStamp;
+var numberOfTabs = 1;
+var currentTab;
 
 app.send = function(message, callback) {
   $.ajax({
@@ -49,7 +51,8 @@ app.clearMessages = function() {
   $('#chats').empty();
 };
 
-app.renderMessage = function(message, mode) {
+app.renderMessage = function(message, mode, tab) {
+  tab = tab || '#chats';
   var $userName = $('<a class="username" ></a>' );
   $userName.text(message.username);
   $userName.click(app.handleUsernameClick.bind(null, $userName.text()));
@@ -58,23 +61,23 @@ app.renderMessage = function(message, mode) {
   }
   var $message = $('<div></div>');
   $message.addClass('chat');
-  var $text = $('<h3></h3>').text(message.text);
-  var $time = $('<h3></h3>').text(message.updatedAt);
-  var $room = $('<h3></h3>').text(message.roomname);
+  var $text = $('<p></p>').text(message.text);
+  // var $time = $('<h3></h3>').text(message.updatedAt);
+  // var $room = $('<h3></h3>').text(message.roomname);
   $message.append($userName);
   $message.append($text);
-  $message.append($time);
-  $message.append($room);
+  // $message.append($time);
+  // $message.append($room);
   if ( mode ) {
-    $('#chats').prepend($message);
+    $(tab).prepend($message);
   } else {
-    $('#chats').append($message);
+    $(tab).append($message);
   }
 };
 
 app.init = function () {
   var temp = $('#main').offset();
-  $('#chats').css('margin-top', 272);
+  $('#tabs').css('margin-top', 272);
   $('#main').css('position', 'fixed').css('top', 0).css('left', temp.left);
 
   $(window).scroll(function() {
@@ -114,21 +117,45 @@ app.changeRoom = function(value, event) {
     var newRoomName = prompt('Give a new room name...');
     if (newRoomName) {
       app.renderRoom(newRoomName);
-      filter = {roomname: newRoomName};
       $('#roomSelect').val(newRoomName);
-      app.clearMessages();
+      // app.clearMessages();
     }
-  } else {
-    refreshing = true;
-    app.clearMessages();
-    filter = {roomname: value};
-    app.fetch(function(obj) {
-      for (var i = 0; i < obj.results.length; i++) {
-        app.renderMessage(obj.results[i]);
-      }
-      refreshing = false;
-    });
-  }
+    value = newRoomName;
+  } 
+
+  var $newTab = $('<li><a href=\"#chats-' + numberOfTabs + '\"></a></li>');
+  $newTab.children().text(value);
+  $('#tabList').append($newTab);
+
+  var $newRoom = $('<div id=\"chats-' + numberOfTabs + '\"/>').attr('data-roomname', value);
+  $newTab.on('click', 'a', function() {
+    currentTab = '#' + $newRoom.attr('id');
+  });
+  $newRoom.addClass('chatroom');
+  $('#tabs').append($newRoom);
+
+  filter = {roomname: value};
+  app.fetch(function(obj) {
+    for (var i = 0; i < obj.results.length; i++) {
+      app.renderMessage(obj.results[i], false, '#' + $newRoom.attr('id'));
+    }
+    refreshing = false;
+    numberOfTabs++;
+    $('#tabs').tabs('refresh');
+  });
+
+
+  // *****************************************
+  // refreshing = true;
+  // app.clearMessages();
+  // filter = {roomname: value};
+  // app.fetch(function(obj) {
+  //   for (var i = 0; i < obj.results.length; i++) {
+  //     app.renderMessage(obj.results[i]);
+  //   }
+  //   refreshing = false;
+  // });
+  
 };
 
 app.renderRoom = function(roomName) {
@@ -163,15 +190,12 @@ app.handleSubmit = function(text) {
 
 app.refresh = function() {
   refreshing = true;
-  // var currentTime = $('#chats :first :nth-child(3)').text();
-  // if (currentTime === '') {
-  //   ;
-  // }
   var params = {updatedAt: {$gt: latestMessageTimeStamp}};
   app.fetch( function(obj) {
     var messages = obj.results;
     for (var i = messages.length - 1; i > -1; i--) {
-      app.renderMessage(messages[i], true);
+      console.log(currentTab);
+      app.renderMessage(messages[i], true, currentTab);
     }
     refreshing = false;
   }, params);
